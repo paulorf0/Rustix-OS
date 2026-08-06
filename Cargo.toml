@@ -1,0 +1,17 @@
+[package]
+name = "rustix"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bootloader_api = "0.11.17"
+
+[profile.dev]
+panic = "abort"
+
+[[bin]]
+name = "rustix"
+path = "src/main.rs"
+test = false
+doctest = false
+bench = false

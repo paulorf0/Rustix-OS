@@ -1,0 +1,7 @@
+/target
+skills-lock.json
+.claude/
+agent/
+.agents/
+CLAUDE.md
+builder/target/
