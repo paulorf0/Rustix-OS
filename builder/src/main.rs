@@ -18,8 +18,12 @@ fn main() {
     let uefi_path = PathBuf::from("target/x86_64-unknown-none/debug/boot-uefi.img");
 
     println!("Generating boot images via bootloader...");
-    bootloader::BiosBoot::new(&kernel_path).create_disk_image(&bios_path).unwrap();
-    bootloader::UefiBoot::new(&kernel_path).create_disk_image(&uefi_path).unwrap();
+    bootloader::BiosBoot::new(&kernel_path)
+        .create_disk_image(&bios_path)
+        .unwrap();
+    bootloader::UefiBoot::new(&kernel_path)
+        .create_disk_image(&uefi_path)
+        .unwrap();
 
     println!("\nSuccess! Boot images generated:");
     println!("  BIOS: {}", bios_path.display());
