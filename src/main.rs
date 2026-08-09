@@ -2,6 +2,8 @@
 #![no_std]
 
 mod gdt;
+mod idt;
+
 use bootloader_api::{BootInfo, entry_point};
 use core::{fmt::Write, panic::PanicInfo};
 use uart_16550::Uart16550Tty;
@@ -19,7 +21,7 @@ use uart_16550::Uart16550Tty;
 // }
 
 entry_point!(kernel_main);
-fn kernel_main(boot_info: &mut BootInfo) -> ! {
+fn kernel_main(_boot_info: &mut BootInfo) -> ! {
     gdt::setup_gdt();
 
     loop {
