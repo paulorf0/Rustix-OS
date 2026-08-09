@@ -96,6 +96,6 @@ qemu-system-x86_64 -m 128M -serial stdio -no-reboot \
 
 ## Estado atual
 
-O kernel é um binário freestanding (`#![no_std]`, `#![no_main]`) que recebe o `BootInfo` do bootloader, obtém o framebuffer e desenha uma linha horizontal no meio da tela. Não há ainda saída serial, GDT, IDT, paginação própria nem alocador de heap.
+O kernel é um binário freestanding (`#![no_std]`, `#![no_main]`) que recebe o `BootInfo` do bootloader e monta sua própria GDT (`src/gdt.rs`): null descriptor, code descriptor e data descriptor, carregados via `lgdt` e um far-return para recarregar `CS` em modo longo. Panics são reportados pela porta serial COM1 (`0x3F8`) via UART 16550, com arquivo, linha, coluna e mensagem. Ainda não há IDT, paginação própria nem alocador de heap.
 
 O foco de desenvolvimento é o caminho UEFI. O caminho BIOS continua sendo gerado e é útil como segundo alvo de teste: uma falha que aparece nos dois aponta para o kernel, enquanto uma falha que aparece em apenas um aponta para a interface de boot.
