@@ -3,6 +3,8 @@
 * 64-bit Interrupt Gate: 0x8E (p=1, dpl=0b00, type=0b1110 => type_attributes=0b1000_1110=0x8E)
 */
 
+use crate::kernel_interrupt_service::isr;
+
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
 struct interrupt_descriptor {
@@ -64,5 +66,38 @@ pub fn idt_init() {
     }
 
     // Set gates.
+    idt_set_gate(0, isr::stub_vec0 as *const (), 0x8E);
+    idt_set_gate(1, isr::stub_vec1 as *const (), 0x8E);
+    idt_set_gate(2, isr::stub_vec2 as *const (), 0x8E);
+    idt_set_gate(3, isr::stub_vec3 as *const (), 0x8E);
+    idt_set_gate(4, isr::stub_vec4 as *const (), 0x8E);
+    idt_set_gate(5, isr::stub_vec5 as *const (), 0x8E);
+    idt_set_gate(6, isr::stub_vec6 as *const (), 0x8E);
+    idt_set_gate(7, isr::stub_vec7 as *const (), 0x8E);
+    idt_set_gate(8, isr::stub_vec8 as *const (), 0x8E);
+    idt_set_gate(9, isr::stub_vec9 as *const (), 0x8E);
+    idt_set_gate(10, isr::stub_vec10 as *const (), 0x8E);
+    idt_set_gate(11, isr::stub_vec11 as *const (), 0x8E);
+    idt_set_gate(12, isr::stub_vec12 as *const (), 0x8E);
+    idt_set_gate(13, isr::stub_vec13 as *const (), 0x8E);
+    idt_set_gate(14, isr::stub_vec14 as *const (), 0x8E);
+    idt_set_gate(15, isr::stub_vec15 as *const (), 0x8E);
+    idt_set_gate(16, isr::stub_vec16 as *const (), 0x8E);
+    idt_set_gate(17, isr::stub_vec17 as *const (), 0x8E);
+    idt_set_gate(18, isr::stub_vec18 as *const (), 0x8E);
+    idt_set_gate(19, isr::stub_vec19 as *const (), 0x8E);
+    idt_set_gate(20, isr::stub_vec20 as *const (), 0x8E);
+    idt_set_gate(21, isr::stub_vec21 as *const (), 0x8E);
+    idt_set_gate(22, isr::stub_vec22 as *const (), 0x8E);
+    idt_set_gate(23, isr::stub_vec23 as *const (), 0x8E);
+    idt_set_gate(24, isr::stub_vec24 as *const (), 0x8E);
+    idt_set_gate(25, isr::stub_vec25 as *const (), 0x8E);
+    idt_set_gate(26, isr::stub_vec26 as *const (), 0x8E);
+    idt_set_gate(27, isr::stub_vec27 as *const (), 0x8E);
+    idt_set_gate(28, isr::stub_vec28 as *const (), 0x8E);
+    idt_set_gate(29, isr::stub_vec29 as *const (), 0x8E);
+    idt_set_gate(30, isr::stub_vec30 as *const (), 0x8E);
+    idt_set_gate(31, isr::stub_vec31 as *const (), 0x8E);
+
     idt_load();
 }

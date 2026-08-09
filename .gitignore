@@ -6,3 +6,5 @@ agent/
 CLAUDE.md
 builder/target/
 repomix.config.json
+.repomixignore
+repomix-output.xml
