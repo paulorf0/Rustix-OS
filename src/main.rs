@@ -2,27 +2,16 @@
 #![no_std]
 
 mod gdt;
-mod idt;
+mod kernel_interrupt_service;
 
 use bootloader_api::{BootInfo, entry_point};
 use core::{fmt::Write, panic::PanicInfo};
 use uart_16550::Uart16550Tty;
 
-// struct TaskStateSegment {
-//
-// }
-//
-// struct SegmentDescriptor {
-//
-// }
-//
-// struct GlobalDescriptorTable {
-//
-// }
-
 entry_point!(kernel_main);
 fn kernel_main(_boot_info: &mut BootInfo) -> ! {
     gdt::setup_gdt();
+    kernel_interrupt_service::idt::idt_init();
 
     loop {
         unsafe { core::arch::asm!("hlt") }

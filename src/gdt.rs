@@ -5,6 +5,7 @@ struct gdtr {
 }
 
 #[repr(C, packed)]
+// This table has eight bytes. Offset eight in the segment selector corresponds to index one in the array.
 struct gdt_entry {
     limit_low: u16,
     base_low: u16,
@@ -43,15 +44,15 @@ static mut GDT: [gdt_entry; 3] = [
     },
 ];
 
-unsafe fn gdt_fill_entry(num: usize, access: u8, granularity: u8, base: u32, limit: u32) {
-    let gdt = &mut GDT[num];
-
-    gdt.limit_low = (limit & 0xFFFF) as u16;
-    gdt.base_low = (base & 0xFFFF) as u16;
-    gdt.base_middle = ((base >> 16) & 0xFF) as u8;
-    gdt.access = access;
-    gdt.granularity = (((limit >> 16) & 0x0F) as u8) | (granularity & 0xF0);
-    gdt.base_high = ((base >> 24) & 0xFF) as u8;
+unsafe fn gdt_fill_entry(index: usize, access: u8, granularity: u8, base: u32, limit: u32) {
+    unsafe {
+        GDT[index].limit_low = (limit & 0xFFFF) as u16;
+        GDT[index].base_low = (base & 0xFFFF) as u16;
+        GDT[index].base_middle = ((base >> 16) & 0xFF) as u8;
+        GDT[index].access = access;
+        GDT[index].granularity = (((limit >> 16) & 0x0F) as u8) | (granularity & 0xF0);
+        GDT[index].base_high = ((base >> 24) & 0xFF) as u8;
+    }
 }
 
 pub fn setup_gdt() {
@@ -69,11 +70,12 @@ pub fn setup_gdt() {
         GDTR.limit = (core::mem::size_of::<[gdt_entry; 3]>() - 1) as u16;
         GDTR.base = core::ptr::addr_of!(GDT) as u64;
 
-        let gdtptr_addr = core::ptr::addr_of!(GDTR);
+        let gdtr_addr = core::ptr::addr_of!(GDTR);
 
         core::arch::asm!(
             "lgdt [{0}]",
-            in(reg) gdtptr_addr,
+            in(reg) gdtr_addr,
+            options(nostack)
         );
         core::arch::asm!(
             "mov ax, 0x10",
