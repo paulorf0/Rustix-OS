@@ -76,6 +76,16 @@ all: run
 # target and then wraps the resulting ELF into bootable disk images. It has to
 # be built for the host target explicitly, because .cargo/config.toml sets
 # x86_64-unknown-none as the default target for this workspace.
+#
+# CARGO_TARGET_X86_64_UNKNOWN_UEFI_RUSTFLAGS works around an LLVM
+# LoopIdiomRecognize bug (llvm/llvm-project#190340) that miscompiles CHAR16
+# null-terminator scans into calls to libc's wcslen, which x86_64-unknown-uefi
+# has no libc to provide. It must be an env var, not .cargo/config.toml,
+# because `cargo install` (used internally by bootloader's build.rs to build
+# bootloader-x86_64-uefi) does not inherit [target] config from the invoking
+# workspace.
+export CARGO_TARGET_X86_64_UNKNOWN_UEFI_RUSTFLAGS := -C llvm-args=-disable-loop-idiom-wcslen
+
 build:
 	cargo $(TOOLCHAIN) run --manifest-path builder/Cargo.toml --target $(HOST_TARGET)
 
