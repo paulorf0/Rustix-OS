@@ -52,7 +52,7 @@ fn idt_load() {
     unsafe {
         core::arch::asm!(
             "lidt [rdi]",
-            "sti",
+            "sti", //
             in("rdi") idtr_addr,
             options(nostack)
         );
