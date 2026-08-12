@@ -292,37 +292,75 @@ pub extern "sysv64" fn stub_vec30() {
     core::arch::naked_asm!("push 30", "jmp {common_stub}", common_stub = sym common_stub)
 }
 
+// Stack alignment invariant at the `call` below:
+//   5 qwords pushed by the CPU (SS, RSP, RFLAGS, CS, RIP)
+// + 2 qwords pushed by the stub (error code, vector)
+// + 15 qwords pushed here (general-purpose registers)
+// = 22 qwords = 176 bytes, which is divisible by 16.
+//
+// The CPU aligns RSP to 16 before pushing the interrupt frame in long mode, so
+// the starting point is guaranteed and RSP is still 16-byte aligned at the call.
+// The System V ABI requires that, otherwise SSE spills such as `movaps` inside
+// the handler fault with #GP. Adding or removing a push here breaks it: keep the
+// total number of pushed qwords even.
 #[unsafe(naked)]
 extern "sysv64" fn common_stub() {
     core::arch::naked_asm!(
-        // 1. Save general-purpose registers
+        // Save context
         "push rax", "push rcx", "push rdx", "push rbx",
         "push rbp", "push rsi", "push rdi",
         "push r8",  "push r9",  "push r10", "push r11",
         "push r12", "push r13", "push r14", "push r15",
 
-        // 2. Pass the whole stack pointer as 1st argument (RDI)
         "mov rdi, rsp",
 
-        // 3. Call the same central Rust function
+        // Call interrupt_dispatch
         "call {handler}",
-        //
-        // 4. Restore registers and clean up the pushed error/vector
+
+        // Restore context
         "pop r15", "pop r14", "pop r13", "pop r12",
         "pop r11", "pop r10", "pop r9",  "pop r8",
         "pop rdi", "pop rsi", "pop rbp",
         "pop rbx", "pop rdx", "pop rcx", "pop rax",
         "add rsp, 16", // Remove 'vector' and 'error_code' from the stack
 
+        // Return of interrupt function.
         "iretq",
         handler = sym interrupt_dispatch,
     );
 }
 
+const PIC_MASTER_CMD: u16 = 0x20;
+const PIC_SLAVE_CMD: u16 = 0xA0;
+const PIC_EOI: u8 = 0x20;
+
+// Acknowledges the interrupt so the PIC clears its in-service bit and can deliver
+// the next IRQ. Vectors 40 and above come from the slave PIC, which must be
+// acknowledged before the master: the master still holds cascade line IRQ2 marked
+// as in service, and releasing it first would open a window for a new IRQ while
+// the slave is still busy.
+unsafe fn send_eoi(vector: u64) {
+    unsafe {
+        if vector >= 40 {
+            core::arch::asm!("out dx, al", in("dx") PIC_SLAVE_CMD, in("al") PIC_EOI);
+        }
+        core::arch::asm!("out dx, al", in("dx") PIC_MASTER_CMD, in("al") PIC_EOI);
+    }
+}
+
 // SysV64 ABI: RDI carries the 1st arg. Stack top (RSP) was moved into RDI
 // just before this call, so interrupt_dispatch receives it as its first argument.
-extern "sysv64" fn interrupt_dispatch(frame: *const InterruptFrame) -> ! {
+//
+// Returns so that `common_stub` can restore the context and run `iretq`. Vectors
+// below 32 are CPU exceptions and divert to generic_handler, which never returns.
+extern "sysv64" fn interrupt_dispatch(frame: *const InterruptFrame) {
     let frame = unsafe { &*frame };
 
-    handlers::generic_handler(frame)
+    if frame.vector < 32 {
+        handlers::generic_handler(frame);
+    }
+
+    // TODO: dispatch to a per-IRQ handler before acknowledging.
+
+    unsafe { send_eoi(frame.vector) };
 }
